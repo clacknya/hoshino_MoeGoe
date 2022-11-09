@@ -1,0 +1,2 @@
+aiohttp
+aiofiles>=0.7.0
