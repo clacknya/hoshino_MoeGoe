@@ -16,7 +16,7 @@ async def moegoe_gs(id: int, text: str) -> bytes:
 	params = {
 		'format': 'mp3',
 		'id':     id,
-		'text':   text,
+		'text':   text.lstrip('\ufeff'),
 	}
 	async with aiohttp.ClientSession(raise_for_status=True) as session:
 		async with session.get('https://genshin.azurewebsites.net/api/speak', params=params) as resp:
@@ -25,7 +25,7 @@ async def moegoe_gs(id: int, text: str) -> bytes:
 async def moegoe_jp(id: int, text: str) -> bytes:
 	params = {
 		'id':     id,
-		'text':   text,
+		'text':   text.lstrip('\ufeff'),
 	}
 	async with aiohttp.ClientSession(raise_for_status=True) as session:
 		async with session.get('https://moegoe.azurewebsites.net/api/speak', params=params) as resp:
@@ -34,79 +34,79 @@ async def moegoe_jp(id: int, text: str) -> bytes:
 async def moegoe_kr(id: int, text: str) -> bytes:
 	params = {
 		'id':     id,
-		'text':   text,
+		'text':   text.lstrip('\ufeff'),
 	}
 	async with aiohttp.ClientSession(raise_for_status=True) as session:
 		async with session.get('https://moegoe.azurewebsites.net/api/speakkr', params=params) as resp:
 			return await resp.read()
 
 speaker_map = {
-	'派蒙': (moegoe_gs, 0),
-	'凯亚': (moegoe_gs, 1),
-	'安柏': (moegoe_gs, 2),
-	'丽莎': (moegoe_gs, 3),
-	'琴': (moegoe_gs, 4),
-	'香菱': (moegoe_gs, 5),
-	'枫原万叶': (moegoe_gs, 6),
-	'迪卢克': (moegoe_gs, 7),
-	'温迪': (moegoe_gs, 8),
-	'可莉': (moegoe_gs, 9),
-	'早柚': (moegoe_gs, 10),
-	'托马': (moegoe_gs, 11),
-	'芭芭拉': (moegoe_gs, 12),
-	'优菈': (moegoe_gs, 13),
-	'云堇': (moegoe_gs, 14),
-	'钟离': (moegoe_gs, 15),
-	'魈': (moegoe_gs, 16),
-	'凝光': (moegoe_gs, 17),
-	'雷电将军': (moegoe_gs, 18),
-	'北斗': (moegoe_gs, 19),
-	'甘雨': (moegoe_gs, 20),
-	'七七': (moegoe_gs, 21),
-	'刻晴': (moegoe_gs, 22),
-	'神里绫华': (moegoe_gs, 23),
-	'戴因斯雷布': (moegoe_gs, 24),
-	'雷泽': (moegoe_gs, 25),
-	'神里绫人': (moegoe_gs, 26),
-	'罗莎莉亚': (moegoe_gs, 27),
-	'阿贝多': (moegoe_gs, 28),
-	'八重神子': (moegoe_gs, 29),
-	'宵宫': (moegoe_gs, 30),
-	'荒泷一斗': (moegoe_gs, 31),
-	'九条裟罗': (moegoe_gs, 32),
-	'夜兰': (moegoe_gs, 33),
-	'珊瑚宫心海': (moegoe_gs, 34),
-	'五郎': (moegoe_gs, 35),
-	'散兵': (moegoe_gs, 36),
-	'女士': (moegoe_gs, 37),
-	'达达利亚': (moegoe_gs, 38),
-	'莫娜': (moegoe_gs, 39),
-	'班尼特': (moegoe_gs, 40),
-	'申鹤': (moegoe_gs, 41),
-	'行秋': (moegoe_gs, 42),
-	'烟绯': (moegoe_gs, 43),
-	'久岐忍': (moegoe_gs, 44),
-	'辛焱': (moegoe_gs, 45),
-	'砂糖': (moegoe_gs, 46),
-	'胡桃': (moegoe_gs, 47),
-	'重云': (moegoe_gs, 48),
-	'菲谢尔': (moegoe_gs, 49),
-	'诺艾尔': (moegoe_gs, 50),
-	'迪奥娜': (moegoe_gs, 51),
-	'鹿野院平藏': (moegoe_gs, 52),
-	'宁宁': (moegoe_jp, 0),
-	'爱瑠': (moegoe_jp, 1),
-	'芳乃': (moegoe_jp, 2),
-	'茉子': (moegoe_jp, 3),
-	'丛雨': (moegoe_jp, 4),
-	'小春': (moegoe_jp, 5),
-	'七海': (moegoe_jp, 6),
-	'Sua': (moegoe_kr, 0),
-	'Mimiru': (moegoe_kr, 1),
-	'Arin': (moegoe_kr, 2),
-	'Yeonhwa': (moegoe_kr, 3),
-	'Yuhwa': (moegoe_kr, 4),
-	'Seonbae': (moegoe_kr, 5),
+	'派蒙': {'func': moegoe_gs, 'kwargs': {'id': 0}},
+	'凯亚': {'func': moegoe_gs, 'kwargs': {'id': 1}},
+	'安柏': {'func': moegoe_gs, 'kwargs': {'id': 2}},
+	'丽莎': {'func': moegoe_gs, 'kwargs': {'id': 3}},
+	'琴': {'func': moegoe_gs, 'kwargs': {'id': 4}},
+	'香菱': {'func': moegoe_gs, 'kwargs': {'id': 5}},
+	'枫原万叶': {'func': moegoe_gs, 'kwargs': {'id': 6}},
+	'迪卢克': {'func': moegoe_gs, 'kwargs': {'id': 7}},
+	'温迪': {'func': moegoe_gs, 'kwargs': {'id': 8}},
+	'可莉': {'func': moegoe_gs, 'kwargs': {'id': 9}},
+	'早柚': {'func': moegoe_gs, 'kwargs': {'id': 10}},
+	'托马': {'func': moegoe_gs, 'kwargs': {'id': 11}},
+	'芭芭拉': {'func': moegoe_gs, 'kwargs': {'id': 12}},
+	'优菈': {'func': moegoe_gs, 'kwargs': {'id': 13}},
+	'云堇': {'func': moegoe_gs, 'kwargs': {'id': 14}},
+	'钟离': {'func': moegoe_gs, 'kwargs': {'id': 15}},
+	'魈': {'func': moegoe_gs, 'kwargs': {'id': 16}},
+	'凝光': {'func': moegoe_gs, 'kwargs': {'id': 17}},
+	'雷电将军': {'func': moegoe_gs, 'kwargs': {'id': 18}},
+	'北斗': {'func': moegoe_gs, 'kwargs': {'id': 19}},
+	'甘雨': {'func': moegoe_gs, 'kwargs': {'id': 20}},
+	'七七': {'func': moegoe_gs, 'kwargs': {'id': 21}},
+	'刻晴': {'func': moegoe_gs, 'kwargs': {'id': 22}},
+	'神里绫华': {'func': moegoe_gs, 'kwargs': {'id': 23}},
+	'戴因斯雷布': {'func': moegoe_gs, 'kwargs': {'id': 24}},
+	'雷泽': {'func': moegoe_gs, 'kwargs': {'id': 25}},
+	'神里绫人': {'func': moegoe_gs, 'kwargs': {'id': 26}},
+	'罗莎莉亚': {'func': moegoe_gs, 'kwargs': {'id': 27}},
+	'阿贝多': {'func': moegoe_gs, 'kwargs': {'id': 28}},
+	'八重神子': {'func': moegoe_gs, 'kwargs': {'id': 29}},
+	'宵宫': {'func': moegoe_gs, 'kwargs': {'id': 30}},
+	'荒泷一斗': {'func': moegoe_gs, 'kwargs': {'id': 31}},
+	'九条裟罗': {'func': moegoe_gs, 'kwargs': {'id': 32}},
+	'夜兰': {'func': moegoe_gs, 'kwargs': {'id': 33}},
+	'珊瑚宫心海': {'func': moegoe_gs, 'kwargs': {'id': 34}},
+	'五郎': {'func': moegoe_gs, 'kwargs': {'id': 35}},
+	'散兵': {'func': moegoe_gs, 'kwargs': {'id': 36}},
+	'女士': {'func': moegoe_gs, 'kwargs': {'id': 37}},
+	'达达利亚': {'func': moegoe_gs, 'kwargs': {'id': 38}},
+	'莫娜': {'func': moegoe_gs, 'kwargs': {'id': 39}},
+	'班尼特': {'func': moegoe_gs, 'kwargs': {'id': 40}},
+	'申鹤': {'func': moegoe_gs, 'kwargs': {'id': 41}},
+	'行秋': {'func': moegoe_gs, 'kwargs': {'id': 42}},
+	'烟绯': {'func': moegoe_gs, 'kwargs': {'id': 43}},
+	'久岐忍': {'func': moegoe_gs, 'kwargs': {'id': 44}},
+	'辛焱': {'func': moegoe_gs, 'kwargs': {'id': 45}},
+	'砂糖': {'func': moegoe_gs, 'kwargs': {'id': 46}},
+	'胡桃': {'func': moegoe_gs, 'kwargs': {'id': 47}},
+	'重云': {'func': moegoe_gs, 'kwargs': {'id': 48}},
+	'菲谢尔': {'func': moegoe_gs, 'kwargs': {'id': 49}},
+	'诺艾尔': {'func': moegoe_gs, 'kwargs': {'id': 50}},
+	'迪奥娜': {'func': moegoe_gs, 'kwargs': {'id': 51}},
+	'鹿野院平藏': {'func': moegoe_gs, 'kwargs': {'id': 52}},
+	'宁宁': {'func': moegoe_jp, 'kwargs': {'id': 0}},
+	'爱瑠': {'func': moegoe_jp, 'kwargs': {'id': 1}},
+	'芳乃': {'func': moegoe_jp, 'kwargs': {'id': 2}},
+	'茉子': {'func': moegoe_jp, 'kwargs': {'id': 3}},
+	'丛雨': {'func': moegoe_jp, 'kwargs': {'id': 4}},
+	'小春': {'func': moegoe_jp, 'kwargs': {'id': 5}},
+	'七海': {'func': moegoe_jp, 'kwargs': {'id': 6}},
+	'Sua': {'func': moegoe_kr, 'kwargs': {'id': 0}},
+	'Mimiru': {'func': moegoe_kr, 'kwargs': {'id': 1}},
+	'Arin': {'func': moegoe_kr, 'kwargs': {'id': 2}},
+	'Yeonhwa': {'func': moegoe_kr, 'kwargs': {'id': 3}},
+	'Yuhwa': {'func': moegoe_kr, 'kwargs': {'id': 4}},
+	'Seonbae': {'func': moegoe_kr, 'kwargs': {'id': 5}},
 }
 
 sv = hoshino.Service(
@@ -119,12 +119,13 @@ sv = hoshino.Service(
 @sv.on_prefix(*map(lambda x: f"让{x}说", speaker_map.keys()))
 async def speak(bot, ev: nonebot.message.CQEvent) -> NoReturn:
 	speaker = ev['prefix'].lstrip('让').rstrip('说')
-	(func, id) = speaker_map[speaker]
+	caller = speaker_map[speaker]
 	text = ev.message.extract_plain_text().strip().lstrip(ev['prefix'])
 	try:
-		data = await func(id=id, text=text)
+		data = await caller['func'](**caller['kwargs'], text=text)
 	except Exception as e:
-		sv.logger.error({'speaker': speaker, 'id': id, 'text': text})
+		sv.logger.error(caller)
+		sv.logger.error(text)
 		sv.logger.error(e)
 		await bot.send(ev, '获取语音失败', at_sender=True)
 	else:
