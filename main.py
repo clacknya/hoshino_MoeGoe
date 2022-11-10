@@ -16,7 +16,7 @@ async def moegoe_gs(id: int, text: str) -> bytes:
 	params = {
 		'format': 'mp3',
 		'id':     id,
-		'text':   text.lstrip('\ufeff'),
+		'text':   text,
 	}
 	async with aiohttp.ClientSession(raise_for_status=True) as session:
 		async with session.get('https://genshin.azurewebsites.net/api/speak', params=params) as resp:
@@ -25,16 +25,34 @@ async def moegoe_gs(id: int, text: str) -> bytes:
 async def moegoe_jp(id: int, text: str) -> bytes:
 	params = {
 		'id':     id,
-		'text':   text.lstrip('\ufeff'),
+		'text':   text,
 	}
 	async with aiohttp.ClientSession(raise_for_status=True) as session:
 		async with session.get('https://moegoe.azurewebsites.net/api/speak', params=params) as resp:
 			return await resp.read()
 
+async def moegoe_HamidashiCreative(id: int, text: str) -> bytes:
+	params = {
+		'id':     id,
+		'text':   text,
+	}
+	async with aiohttp.ClientSession(raise_for_status=True) as session:
+		async with session.get('https://moegoe.azurewebsites.net/api/speak2', params=params) as resp:
+			return await resp.read()
+
+async def moegoe_DRACURIOT(id: int, text: str) -> bytes:
+	params = {
+		'id':     id,
+		'text':   text,
+	}
+	async with aiohttp.ClientSession(raise_for_status=True) as session:
+		async with session.get('https://moegoe.azurewebsites.net/api/speak3', params=params) as resp:
+			return await resp.read()
+
 async def moegoe_kr(id: int, text: str) -> bytes:
 	params = {
 		'id':     id,
-		'text':   text.lstrip('\ufeff'),
+		'text':   text,
 	}
 	async with aiohttp.ClientSession(raise_for_status=True) as session:
 		async with session.get('https://moegoe.azurewebsites.net/api/speakkr', params=params) as resp:
@@ -94,20 +112,62 @@ speaker_map = {
 	'诺艾尔': {'func': moegoe_gs, 'kwargs': {'id': 50}},
 	'迪奥娜': {'func': moegoe_gs, 'kwargs': {'id': 51}},
 	'鹿野院平藏': {'func': moegoe_gs, 'kwargs': {'id': 52}},
-	'宁宁': {'func': moegoe_jp, 'kwargs': {'id': 0}},
-	'爱瑠': {'func': moegoe_jp, 'kwargs': {'id': 1}},
-	'芳乃': {'func': moegoe_jp, 'kwargs': {'id': 2}},
-	'茉子': {'func': moegoe_jp, 'kwargs': {'id': 3}},
-	'丛雨': {'func': moegoe_jp, 'kwargs': {'id': 4}},
-	'小春': {'func': moegoe_jp, 'kwargs': {'id': 5}},
-	'七海': {'func': moegoe_jp, 'kwargs': {'id': 6}},
-	'Sua': {'func': moegoe_kr, 'kwargs': {'id': 0}},
-	'Mimiru': {'func': moegoe_kr, 'kwargs': {'id': 1}},
-	'Arin': {'func': moegoe_kr, 'kwargs': {'id': 2}},
-	'Yeonhwa': {'func': moegoe_kr, 'kwargs': {'id': 3}},
-	'Yuhwa': {'func': moegoe_kr, 'kwargs': {'id': 4}},
-	'Seonbae': {'func': moegoe_kr, 'kwargs': {'id': 5}},
+
+	'綾地寧々': {'func': moegoe_jp, 'kwargs': {'id': 0}},
+	'因幡めぐる': {'func': moegoe_jp, 'kwargs': {'id': 1}},
+	'朝武芳乃': {'func': moegoe_jp, 'kwargs': {'id': 2}},
+	'常陸茉子': {'func': moegoe_jp, 'kwargs': {'id': 3}},
+	'ムラサメ': {'func': moegoe_jp, 'kwargs': {'id': 4}},
+	'鞍馬小春': {'func': moegoe_jp, 'kwargs': {'id': 5}},
+	'在原七海': {'func': moegoe_jp, 'kwargs': {'id': 6}},
+
+	'和泉妃愛': {'func': moegoe_HamidashiCreative, 'kwargs': {'id': 0}},
+	'常盤華乃': {'func': moegoe_HamidashiCreative, 'kwargs': {'id': 1}},
+	'錦あすみ': {'func': moegoe_HamidashiCreative, 'kwargs': {'id': 2}},
+	'鎌倉詩桜': {'func': moegoe_HamidashiCreative, 'kwargs': {'id': 3}},
+	'竜閑天梨': {'func': moegoe_HamidashiCreative, 'kwargs': {'id': 4}},
+	'和泉里': {'func': moegoe_HamidashiCreative, 'kwargs': {'id': 5}},
+	'新川広夢': {'func': moegoe_HamidashiCreative, 'kwargs': {'id': 6}},
+	'聖莉々子': {'func': moegoe_HamidashiCreative, 'kwargs': {'id': 7}},
+
+	'矢来美羽': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 0}},
+	'布良梓': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 1}},
+	'エリナ': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 2}},
+	'稲叢莉音': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 3}},
+	'ニコラ': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 4}},
+	'荒神小夜': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 5}},
+	'大房ひよ里': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 6}},
+	'淡路萌香': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 7}},
+	'アンナ': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 8}},
+	'倉端直太': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 9}},
+	'枡形兵馬': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 10}},
+	'扇元樹': {'func': moegoe_DRACURIOT, 'kwargs': {'id': 11}},
+
+	'수아': {'func': moegoe_kr, 'kwargs': {'id': 0}},
+	'미미르': {'func': moegoe_kr, 'kwargs': {'id': 1}},
+	'아린': {'func': moegoe_kr, 'kwargs': {'id': 2}},
+	'연화': {'func': moegoe_kr, 'kwargs': {'id': 3}},
+	'유화': {'func': moegoe_kr, 'kwargs': {'id': 4}},
+	'선배': {'func': moegoe_kr, 'kwargs': {'id': 5}},
 }
+
+def add_map_alias(smap: dict) -> NoReturn:
+	smap.update({
+		'宁宁': smap['綾地寧々'],
+		'爱瑠': smap['因幡めぐる'],
+		'芳乃': smap['朝武芳乃'],
+		'茉子': smap['常陸茉子'],
+		'丛雨': smap['ムラサメ'],
+		'小春': smap['鞍馬小春'],
+		'七海': smap['在原七海'],
+
+		'Sua': smap['수아'],
+		'Mimiru': smap['미미르'],
+		'Arin': smap['아린'],
+		'Yeonhwa': smap['연화'],
+		'Yuhwa': smap['유화'],
+		'Seonbae': smap['선배'],
+	})
 
 sv = hoshino.Service(
 	'MoeGoe',
@@ -116,11 +176,13 @@ sv = hoshino.Service(
 	help_='[让xxx说] 合成语音\n' + ','.join(speaker_map.keys())
 )
 
+add_map_alias(speaker_map)
+
 @sv.on_prefix(*map(lambda x: f"让{x}说", speaker_map.keys()))
 async def speak(bot, ev: nonebot.message.CQEvent) -> NoReturn:
 	speaker = ev['prefix'].lstrip('让').rstrip('说')
 	caller = speaker_map[speaker]
-	text = ev.message.extract_plain_text().strip().lstrip(ev['prefix'])
+	text = ev.message.extract_plain_text().strip().lstrip(ev['prefix']).lstrip('\ufeff')
 	try:
 		data = await caller['func'](**caller['kwargs'], text=text)
 	except Exception as e:
