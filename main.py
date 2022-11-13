@@ -122,6 +122,7 @@ async def huggingface_join(namespace: str, fn_index: int, data: Union[List, Dict
 					return ret['output']
 				else:
 					raise ValueError(f"Unknow msg {ret}")
+			raise RuntimeWarning('Websocket unexpectedly closed')
 
 async def huggingface_nyaru_basic(text: str) -> bytes:
 	data = await huggingface_push(namespace='innnky/vits-nyaru', fn_index=0, data=[text])
