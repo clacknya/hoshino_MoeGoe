@@ -15,6 +15,7 @@ import hoshino
 
 MAX_RETRY_COUNT = 300
 RETRY_INTERVAL = 1
+MAX_WAIT_TIME = 420
 
 async def moegoe_gs(id: int, text: str) -> bytes:
 	params = {
@@ -326,7 +327,10 @@ async def speak(bot, ev: nonebot.message.CQEvent) -> NoReturn:
 	caller = speaker_map[speaker]
 	text = ev.message.extract_plain_text().strip().lstrip(ev['prefix']).lstrip('\ufeff')
 	try:
-		data = await caller['func'](**caller['kwargs'], text=text)
+		data = await asyncio.wait_for(
+			caller['func'](**caller['kwargs'], text=text),
+			timeout=MAX_WAIT_TIME,
+		)
 	except Exception as e:
 		sv.logger.error(caller)
 		sv.logger.error(text)
