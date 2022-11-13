@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from typing import NoReturn
+from typing import List, Dict, Union, NoReturn
 
 import os
 import nonebot
-import aiocqhttp
 import asyncio
 import aiohttp
 import aiofiles
+import base64
+import random
 
 import hoshino
+
+MAX_RETRY_COUNT = 300
+RETRY_INTERVAL = 1
 
 async def moegoe_gs(id: int, text: str) -> bytes:
 	params = {
@@ -57,6 +61,82 @@ async def moegoe_kr(id: int, text: str) -> bytes:
 	async with aiohttp.ClientSession(raise_for_status=True) as session:
 		async with session.get('https://moegoe.azurewebsites.net/api/speakkr', params=params) as resp:
 			return await resp.read()
+
+def huggingface_hash() -> str:
+	return ''.join((random.choices('0123456789abcdefghijklmnopqrstuvwxyz', k=11)))
+
+async def huggingface_push(namespace: str, fn_index: int, data: Union[List, Dict]) -> Dict:
+	async with aiohttp.ClientSession(raise_for_status=True) as session:
+		data = {
+			'action': 'predict',
+			'fn_index': fn_index,
+			'data': data,
+			'session_hash': '',
+		}
+		async with session.post(f"https://hf.space/embed/{namespace}/api/queue/push/", json=data) as resp:
+			ret = await resp.json()
+		# queue_position = ret['queue_position']
+		data = {
+			'hash': ret['hash'],
+		}
+		for _ in range(MAX_RETRY_COUNT):
+			await asyncio.sleep(RETRY_INTERVAL)
+			async with session.post(f"https://hf.space/embed/{namespace}/api/queue/status/", json=data) as resp:
+				ret = await resp.json()
+			if ret['status'] == 'PENDING':
+				continue
+			elif ret['status'] == 'COMPLETE':
+				return ret['data']
+			else:
+				raise ValueError(f"Unknow status {ret}")
+		raise asyncio.TimeoutError(f"Maximum retry count {MAX_RETRY_COUNT} reached")
+
+async def huggingface_join(namespace: str, fn_index: int, data: Union[List, Dict]) -> Dict:
+	async with aiohttp.ClientSession(raise_for_status=True) as session:
+		async with session.ws_connect(f"wss://spaces.huggingface.tech/{namespace}/queue/join") as ws:
+			session_hash = huggingface_hash()
+			ret = await ws.receive_json()
+			if ret['msg'] != 'send_hash':
+				raise ValueError(f"Unknow msg {ret}")
+			await ws.send_json({
+				'fn_index': fn_index,
+				'session_hash': session_hash,
+			})
+			while not ws.closed:
+				ret = await ws.receive_json()
+				if ret['msg'] == 'estimation':
+					if ret['queue_eta'] != 0:
+						await asyncio.sleep(int(ret['queue_eta']))
+				elif ret['msg'] == 'send_data':
+					await ws.send_json({
+						'fn_index': fn_index,
+						'data': data,
+						'session_hash': session_hash,
+					})
+				elif ret['msg'] == 'process_starts':
+					pass
+				elif ret['msg'] == 'process_completed':
+					if not ret['success']:
+						raise RuntimeWarning(f"huggingface failed: {ret}")
+					return ret['output']
+				else:
+					raise ValueError(f"Unknow msg {ret}")
+
+async def huggingface_nyaru_basic(text: str) -> bytes:
+	data = await huggingface_push(namespace='innnky/vits-nyaru', fn_index=0, data=[text])
+	assert data['data'][0] == 'Success'
+	return base64.b64decode(data['data'][1][22:].encode('utf-8'))
+
+async def huggingface_nyaru_advanced(text: str) -> bytes:
+	data = await huggingface_push(namespace='innnky/vits-nyaru', fn_index=1, data=[text])
+	data = await huggingface_push(namespace='innnky/vits-nyaru', fn_index=2, data=[data['data'][0]])
+	assert data['data'][0] == 'Success'
+	return base64.b64decode(data['data'][1][22:].encode('utf-8'))
+
+async def huggingface_moe_tts(fn_index: int, character: str, text: str, speed: int=1) -> bytes:
+	data = await huggingface_join(namespace='skytnt/moe-tts', fn_index=fn_index, data=[text, character, speed, False])
+	assert data['data'][0] == 'Success'
+	return base64.b64decode(data['data'][1][22:].encode('utf-8'))
 
 speaker_map = {
 	'派蒙': {'func': moegoe_gs, 'kwargs': {'id': 0}},
@@ -149,9 +229,62 @@ speaker_map = {
 	'연화': {'func': moegoe_kr, 'kwargs': {'id': 3}},
 	'유화': {'func': moegoe_kr, 'kwargs': {'id': 4}},
 	'선배': {'func': moegoe_kr, 'kwargs': {'id': 5}},
+
+	'猫雷にゃる': {'func': huggingface_nyaru_advanced, 'kwargs': {}},
+
+	# '綾地寧々': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 1, 'character': '綾地寧々'}},
+	# '因幡めぐる': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 1, 'character': '因幡めぐる'}},
+	# '朝武芳乃': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 1, 'character': '朝武芳乃'}},
+	# '常陸茉子': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 1, 'character': '常陸茉子'}},
+	# 'ムラサメ': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 1, 'character': 'ムラサメ'}},
+	# '鞍馬小春': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 1, 'character': '鞍馬小春'}},
+	# '在原七海': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 1, 'character': '在原七海'}},
+
+	# '和泉妃愛': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 5, 'character': '和泉妃愛'}},
+	# '常盤華乃': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 5, 'character': '常盤華乃'}},
+	# '錦あすみ': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 5, 'character': '錦あすみ'}},
+	# '鎌倉詩桜': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 5, 'character': '鎌倉詩桜'}},
+	# '竜閑天梨': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 5, 'character': '竜閑天梨'}},
+	# '和泉里': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 5, 'character': '和泉里'}},
+	# '新川広夢': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 5, 'character': '新川広夢'}},
+	# '聖莉々子': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 5, 'character': '聖莉々子'}},
+
+	'四季ナツメ': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 9, 'character': '四季ナツメ'}},
+	'明月栞那': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 9, 'character': '明月栞那'}},
+	'墨染希': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 9, 'character': '墨染希'}},
+	'火打谷愛衣': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 9, 'character': '火打谷愛衣'}},
+	'汐山涼音': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 9, 'character': '汐山涼音'}},
+
+	'春日野穹': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 13, 'character': '春日野穹'}},
+	'天女目瑛': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 13, 'character': '天女目瑛'}},
+	'依媛奈緒': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 13, 'character': '依媛奈緒'}},
+	'渚一葉': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 13, 'character': '渚一葉'}},
+
+	'蓮華': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 17, 'character': '蓮華'}},
+	'篝ノ霧枝': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 17, 'character': '篝ノ霧枝'}},
+	'沢渡雫': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 17, 'character': '沢渡雫'}},
+	'亜璃子': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 17, 'character': '亜璃子'}},
+	'灯露椎': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 17, 'character': '灯露椎'}},
+	'覡夕莉': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 17, 'character': '覡夕莉'}},
+
+	'鷹倉杏璃': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '鷹倉杏璃'}},
+	'鷹倉杏鈴': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '鷹倉杏鈴'}},
+	'アペイリア': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': 'アペイリア'}},
+	'倉科明日香': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '倉科明日香'}},
+	'ATRI': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': 'ATRI'}},
+	'アイラ': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': 'アイラ'}},
+	'新堂彩音': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '新堂彩音'}},
+	'姫野星奏': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '姫野星奏'}},
+	'小鞠ゆい': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '小鞠ゆい'}},
+	'聖代橋氷織': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '聖代橋氷織'}},
+	'有坂真白': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '有坂真白'}},
+	'白咲美絵瑠': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '白咲美絵瑠'}},
+	'二階堂真紅': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 29, 'character': '二階堂真紅'}},
+
+	'上海人': {'func': huggingface_moe_tts, 'kwargs': {'fn_index': 53, 'character': '上海话'}},
 }
 
-def add_map_alias(smap: dict) -> NoReturn:
+def add_map_alias(smap: Dict) -> NoReturn:
 	smap.update({
 		'宁宁': smap['綾地寧々'],
 		'爱瑠': smap['因幡めぐる'],
@@ -167,6 +300,15 @@ def add_map_alias(smap: dict) -> NoReturn:
 		'Yeonhwa': smap['연화'],
 		'Yuhwa': smap['유화'],
 		'Seonbae': smap['선배'],
+
+		'猫雷': smap['猫雷にゃる'],
+
+		'穹妹': smap['春日野穹'],
+
+		'莲华': smap['蓮華'],
+		'雾枝': smap['篝ノ霧枝'],
+
+		'星奏': smap['姫野星奏'],
 	})
 
 sv = hoshino.Service(
